@@ -1,0 +1,19 @@
+# This is the distance from the top of the tank to the probe location ( in 10ths of an inch)
+# this may be good to read from a config file ....
+PROBE_DIST_LIST=[0, 170, 410, 530, 600,700]
+
+# By default we will be running running on the Rpi but for testing purposed this flag ( passed in from the commandline)
+# allows us to code around the kernel set up that is done on the pi.
+SIMULATE=False
+
+
+# get the list of temp probes  attached to the bus
+# for example ... /home/pi/hw_heater/sensors/1.upper/w1_slave' They are links to the real device files but by creating
+# links we can assign them a name and an ordinal value. prob0 is at the top probe prob3 is at the bottom
+
+DEV_FILES =/home/pi/hw_heater/sensors/1.upper/w1_slave
+
+
+
+
+
