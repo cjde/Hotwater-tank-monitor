@@ -1,3 +1,9 @@
+"""
+Description: 
+ Collects temps fro mthe hotwater heater and publish them to the MQTT message queue 
+ 
+ Mod: 10/21/17 - changed MQTT server to 192.168.2.48 
+"""
 __author__ = 'CJDE'
 import os
 import glob
@@ -6,6 +12,7 @@ import re
 import json
 import argparse
 import sys
+import paho.mqtt.publish as publish
 
 # this is the list of sensors and associated properties that make up the hot water heater
 SENSORS  = []
@@ -153,6 +160,10 @@ parser.add_argument('--test_calibration','-t',
     default=0,
     help='Number or temp collections to run and apply the calibration amount ' )
 
+parser.add_argument('--mqtt','-m',
+    action='store_true',
+    help='Publish to MQTT server' )
+
 
 args = parser.parse_args()
 
@@ -206,12 +217,15 @@ for i in range( 0,  len(DEV_FILES) ):
 # short or long form
 if args.verbose:
     SENSORS_str = json.dumps(SENSORS,sort_keys=True,indent=4,separators=(',', ': '))
-    print SENSORS_str
 else:
-    print [SENSORS[i]["temp_f"] for i in range( 0, len(DEV_FILES) ) ]
+    #print [SENSORS[i]["temp_f"] for i in range( 0, len(DEV_FILES) ) ]
+    SENSORS_str = json.dumps([SENSORS[i]["temp_f"] for i in range( 0, len(DEV_FILES) ) ],sort_keys=True,indent=4,separators=(',', ': '))
 
+print SENSORS_str
 
-
+if args.mqtt:
+   publish.single( "hotwater", SENSORS_str, qos=1, retain=True, client_id="hwsender", hostname="192.168.2.48" )
+ 
 
 
 

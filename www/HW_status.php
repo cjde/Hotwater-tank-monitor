@@ -1,6 +1,9 @@
 <html>
 <head>
-	<title>Hot Water Tank Status and Control</title>
+<title>Hot Water Tank Status and Control</title>
+<link rel="icon" href="http://192.168.2.15/hw/favicon.ico" />
+<link rel=”icon” sizes=”192×192″ href=”http://192.168.2.15/hw/favicon.png”>
+<link rel=”icon” sizes=”128×128″ href=”http://192.168.2.15/hw/favicon.png”>
 </head>
 <body>
 
@@ -8,39 +11,98 @@
 echo "<pre>";
 $json_str = shell_exec("/usr/bin/python /home/pi/hw_heater/HW_status.py -o hotwater.jpg" );
 $json_obj = json_decode( $json_str );
+$gooo=111;
 echo "</pre>";
 ?>
+
+<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+<script type="text/javascript">
+    google.load('visualization', '1', {packages: ['gauge']});
+</script>
+
+<script type="text/javascript">
+   function drawVisualization() {
+   // Create and populate the data table.
+   // get ithe new json element and add them to th guages here 
+      var data = google.visualization.arrayToDataTable(
+      [
+        ['Label', 'Value'],
+        ['Input', <?php  echo 78 ?> ],
+        ['From Exch',  <?php  echo round( $json_obj->temp_listf[0]) ?>],
+        ['To Exch',  <?php  echo round( $json_obj->temp_listf[3]) ?> ]
+      ]
+      );
+
+      var options = {
+        min: 60, max: 140,
+        greenFrom: 60, greenTo: 84,
+        redFrom: 116, redTo: 140,
+        minorTicks: 10
+      };
+
+     // Create and draw the visualization.
+     new google.visualization.Gauge(document.getElementById('visualization')).
+     draw(data, options);
+}
+
+google.setOnLoadCallback(drawVisualization);
+</script>
+
 
 <p>&nbsp;</p>
 
 
 <table border="black" cellpadding="0" cellspacing="0" height="681" width="623" border-radius="50px">
-	<tbody>
-		<tr>
-			<td colspan="3">
-			<h2 style="text-align: center;">Hot Water Tank Control</h2>
-			<?php
-			echo "<center>";
-			echo date("M d Y h:i:s A") . "<br>";
-			echo "</center>"
-			?>
+<tbody>
+	<tr>
+		<td colspan="3">
+		<h2 style="text-align: center;">Hot Water Tank Control</h2>
+		<?php
+		echo "<center>";
+		echo date("M d Y h:i:s A") . "<br>";
+		echo "</center>"
+		?>
 
-		</tr>
-		<tr>
-			<td>
-			<p style="text-align: center;">Heat map</p>
-			</td>
-			<td style="text-align: center;">
-			<p>Power Status</p>
+	</tr>
+	<tr>
+		<td>
+		<p style="text-align: center;">Heat map</p>
+		</td>
+		<td style="text-align: center;"> Power  
 
-			<p><span style="color:#00FF00;">ON</span> <input checked="checked" name="power" type="radio" value="1" />
-			   <span style="color:#FF0000;">OFF</span><input name="power" type="radio" value="0" /></p>
-			</td>
-			<td style="text-align: center; border-color: black;">
-			<p>Energy Content</p>
+        <?php
+        // this realy only needs to be a scalar , not anarray
+        $val_array = array(0,0,0,0,0,0,0,0);
+        $Pins = array( 5,6,10,11,5,6,10,11 );
 
-			<p><strong>
-                        <?php 
+        // what is the ordinal value of the pin in the array ?
+        $i =0;
+        $pin = $Pins[$i];
+
+        //set the intial state on the pin and set it the indicator to that
+        system("gpio mode ".$pin." out");
+        exec ("gpio read ".$pin, $val_array[$i], $return );
+
+        //if gpio is  off
+        if ($val_array[$i][0] == 1 ) {
+                echo ("<img id='button_0' src='poweron.png' height='65' width='65' align=middle onclick='change_pin (".$i.");'/>");
+        }
+        //if f gpio is on
+        if ($val_array[$i][0] == 0 ) {
+                echo ("<img id='button_0' src='poweroff.png' height='65' width='65' align=middle onclick='change_pin (".$i.");'/>");
+        }
+        ?>
+        <!-- javascript -->
+        <script src="script.js"></script>
+
+
+
+		</td>
+		<td style="text-align: center; border-color: black;">
+		<p>Energy Content</p>
+
+		<p><strong>
+		<?php 
 			echo $json_obj->BTU, " BTU"
                         ?>
 			</strong></p>
@@ -50,34 +112,12 @@ echo "</pre>";
 			<td rowspan="4"><br />
 			<img alt="Temp map" src="hotwater.jpg" style="display: block; margin-left: 20; margin-right: 20; " /></td>
 			<td rowspan="4" style="text-align: center;">
-			<p style="text-align: center;">Water usage estimates</p>
+			<p style="text-align: center;">Heat Recovery</p>
+
+ <div id="visualization" style="width: 200px; height: 575px;"></div> 
 
 			<p style="text-align: center;">&nbsp;</p>
 
-			<table align="center" border="black" cellpadding="0" cellspacing="1" height="316" style="background-color: lightblue;" width="204">
-				<tbody>
-					<tr>
-						<td style="border-color: black;">&nbsp;Temperature</td>
-						<td style="border-color: black;">Duration (min)</td>
-					</tr>
-					<tr>
-						<td style="border-color: black;">100</td>
-						<td style="border-color: black">10</td>
-					</tr>
-					<tr>
-						<td style="border-color: black;">90</td>
-						<td style="border-color: black;">20</td>
-					</tr>
-					<tr>
-						<td style="border-color: black;">80</td>
-						<td style="border-color: black;">30</td>
-					</tr>
-					<tr>
-						<td style="border-color: black;">70</td>
-						<td style="border-color: black;">40</td>
-					</tr>
-				</tbody>
-			</table>
 			</td>
 			<td style="text-align: center; white-space: nowrap; vertical-align: middle;">
 			<p style="text-align: center;"><strong>Peter Trigger</strong></p>

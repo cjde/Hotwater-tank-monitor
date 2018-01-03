@@ -22,14 +22,14 @@ TEMPCOLORS = ['#FF0000','#FF0008','#FF0010','#FF0018','#FF0020','#FF0028','#FF00
 TEMP_TO_COLOR ={}
 
 # maximum temp expected in the tank ( must be greater that 64 )
-MAXTEMP = 145
+MAXTEMP = 135
 MINTEMP = MAXTEMP - len(TEMPCOLORS)
 
 # Width of the image, Height is determined by the  size of the tank
 MAP_WIDTH = 240
 
 # color divisions per degree interpolated
-COLOR_DIV = 5
+COLOR_DIV = 4
 
 # temp of the probes
 PROBE_TEMP_LIST=[125,95,90,70]
@@ -52,16 +52,17 @@ TANKSIZE = 50.0
 LBS_PER_INCH = ( TANKSIZE * 8.34 )/ ( float(PROBE_DIST_LIST[-1] ) )
 
 # temperature of the water flowing into the tank ( in degrees F )
-ROOM_TEMP=78.0
+ROOM_TEMP=74.0
 
 
-HWHEATER_URL = 'http://192.168.2.15//hw/HW_temps.php'
+# HWHEATER_URL = 'http://192.168.1.2/hw/HW_temps.php'
+HWHEATER_URL = 'http://192.168.1.15/hw/HW_temps.php'
 
 # right and left side of heat map labels
 RSCALE={}
 LSCALE={}
 
-
+DEBUG = False; 
 
 def hex2rgb (color):
     """
@@ -261,8 +262,19 @@ def render_color_map( t_list, d_list, outfile ):
             temp_here = t1 + temp_count
             # round the temp_here to the nearest COLOR_DIV
             t = "{0:.1f}".format(round(temp_here * COLOR_DIV, 0 )/COLOR_DIV)
-            # print t,rect, TEMP_TO_COLOR[t]
-            draw.rectangle(rect,fill=rgb2hex(TEMP_TO_COLOR[t]))
+
+
+            # dont fall off the end of hte color map  
+            if int(temp_here) == MINTEMP : 
+                safe_t = "{0:.1f}".format( MINTEMP)
+                draw.rectangle(rect,fill=rgb2hex(TEMP_TO_COLOR[safe_t]))
+            else:
+                draw.rectangle(rect,fill=rgb2hex(TEMP_TO_COLOR[t]))
+                safe_t = t 
+
+            if DEBUG: 
+                #sys.stderr.write( "t: %s rect[Y1]: %d\n" % ( t,  rect[1] )) 
+                print t,rect,TEMP_TO_COLOR[safe_t]
 
             # print temp along the side of the color map every 10 degrees
             # make a list of all the points where the the temperature ends in 0
@@ -289,7 +301,7 @@ def render_color_map( t_list, d_list, outfile ):
     # always write the picture to a file
     im.save(outfile,"JPEG", quality=90,optimize=True) # , progressive=True)
 
-def get_hotwater_data():
+def get_hotwater_data0():
     """
     This is the function that gets the data from the other pi that is actually monitoring the HW heater
     Stored at the URL is structure that represents the 4 probes that are attached to the tank.
@@ -301,6 +313,55 @@ def get_hotwater_data():
     PROBE_DIST_LIST = [i["dist"] for i in dic ]
 
     #print json.dumps(PROBE_TEMP_LIST,sort_keys=False,indent=4,separators=(',', ': '))
+
+    return PROBE_TEMP_LIST, PROBE_DIST_LIST
+
+import paho.mqtt.client as mqtt
+PAYLOAD = "" 
+
+# The callback for when the client receives a CONNACK response from the server.
+def on_connect(client, userdata, flags, rc):
+    # print("Connected with result code "+str(rc))
+
+    # Subscribing in on_connect() means that if we lose the connection and
+    # reconnect then subscriptions will be renewed.
+    client.subscribe("hotwater")
+
+
+# The callback for when a PUBLISH message is received from the server.
+def on_message(client, userdata, msg):
+    global PAYLOAD
+#    print(msg.topic+" "+str(msg.payload))
+    PAYLOAD = str(msg.payload) 
+    client.disconnect()
+
+
+def get_hotwater_data():
+    """
+    This is the function that gets the data from the other pi that is actually monitoring the HW heater
+    Stored at the URL is structure that represents the 4 probes that are attached to the tank.
+    The structure has extra data that we dont need so we just pull out the stuff that in important
+    """
+    global PAYLOAD
+
+    client = mqtt.Client()
+    client.on_connect = on_connect
+    client.on_message = on_message
+
+    client.connect("192.168.2.48", port=1883, keepalive=60)
+
+    # Blocking call that processes network traffic, dispatches callbacks and
+    # handles reconnecting.
+    # Other loop*() functions are available that give a threaded interface and a
+    # manual interface.
+    client.loop_forever()
+    # this will return when the call back disconnets and the PAYLOAD global has been filled 
+
+    dic = json.loads( PAYLOAD )
+    PROBE_TEMP_LIST = [i["temp_f"] for i in dic ]
+    PROBE_DIST_LIST = [i["dist"] for i in dic ]
+
+#    print json.dumps(PROBE_TEMP_LIST,sort_keys=False,indent=4,separators=(',', ': '))
 
     return PROBE_TEMP_LIST, PROBE_DIST_LIST
 
@@ -394,6 +455,9 @@ if __name__ == '__main__':
     parser.add_argument('--nomap','-n',
                         action='store_true',
                         help='do not generate a heat map only output the heat content')
+    parser.add_argument('--debug','-d',
+                        action='store_true',
+                        help='Enable Debug output.')
 
     args = parser.parse_args()
 
@@ -405,6 +469,11 @@ if __name__ == '__main__':
             dest = "c:\\temp\\hotwater.jpeg"
         else:
             dest = "/tmp/hotwater.jpg"
+
+    if args.debug: 
+       DEBUG = True
+       sys.stderr.write( "Debug enabled\n" )
+
 
     # Get the temperature from the Pi that is monitoring the hotwater heater
     PROBE_TEMP_LIST, PROBE_DIST_LIST =  get_hotwater_data()
