@@ -71,13 +71,9 @@ def on_disconnect(client, userdata, rc):
 
 #----- MAIN ----- 
 
-# Setup the GPIO pins before the callbacks , Board numbering  
+# Setup the GPIO pinds befor he callbacks , Board numbering  
 GPIO.setmode(GPIO.BOARD) 
-GPIO.setwarnings(False)
 GPIO.setup(power_pin, GPIO.OUT) 
-
-# Get the current state of the pin  
-power_state = GPIO.input(power_pin)
 
 print("creating new instance")
 client = mqtt.Client(clientid) 
@@ -102,9 +98,8 @@ while Connected != True:
     time.sleep(0.1)
 
 client.on_disconnect = on_disconnect
-client.on_publish = on_publish
 
-# set the value status  topic
+client.on_publlish = on_publish
 
 print("Starting subscription cmd_topic",cmd_topic)
 client.subscribe(cmd_topic)
