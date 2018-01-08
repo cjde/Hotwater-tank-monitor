@@ -25,24 +25,36 @@ clientid = "hw_device"
 Connected = False 
 
 def on_message_1(client, userdata, message):
-    print("\nmessage received " ,str(message.payload.decode("utf-8")))
+    print("message received " ,str(message.payload.decode("utf-8")))
     print("message topic=",message.topic)
     print("message qos=",message.qos)
     print("message retain flag=",message.retain)
 
 def on_message(client, userdata, msg):
     print ("Topic: "+ msg.topic+"\nMessage: "+str(msg.payload.decode("utf-8")))
-    if on_msg in msg.payload:
-        print("Power on!")
-        GPIO.output(power_pin, True)
-    elif off_msg in msg.payload:
-        print("Power Off!")
-        GPIO.output(power_pin, False)
-    elif exit_msg in msg.payload:
-        print("Shutin down !")
-        GPIO.cleanup()
-    else:
-        print("Unknown cmd")
+
+    # Do we have command or a status topic ? 
+    if cmd_topic in msg.topic: 
+        if on_msg in msg.payload:
+            print("Power on!")
+            GPIO.output(power_pin, True)
+        elif off_msg in msg.payload:
+            print("Power Off!")
+            GPIO.output(power_pin, False)
+        elif exit_msg in msg.payload:
+            print("Shutin down !")
+            GPIO.cleanup()
+        else:
+            print("Unknown Command",msg.payload)
+
+    # Ok status message request 
+    elif sta_topic in msg.topic:
+        if on_msg in msg.payload:
+            print("set Power on!")
+        elif off_msg in msg.payload:
+            print("set Power off!")
+        else:
+            print("Unknown status",msg.payload)
 
 
 def on_log(client, userdata, level, buf):
@@ -58,7 +70,7 @@ def on_connect(client, userdata, flags, rc):
         print("Connected to broker")
         Connected = True                #Signal connection 
     else:
-        print("Connection failed")
+        print("Connection to broker failed")
 
 def on_publish(client, userdata, mid):
     print ("on_publish mid: ",mid)
@@ -104,22 +116,29 @@ while Connected != True:
 client.on_disconnect = on_disconnect
 client.on_publish = on_publish
 
-# set the value status  topic
+# subscribe to the command and the status topices
 
 print("Starting subscription cmd_topic",cmd_topic)
 client.subscribe(cmd_topic)
 print("Starting subscription sta_topic",sta_topic)
 client.subscribe(sta_topic)
 
+# send a power on message  
 print("Publishing message to topic",cmd_topic)
 client.publish(cmd_topic,on_msg)
 
+# send a status message 
+print("Publishing ",on_msg," to topic",sta_topic)
+client.publish(sta_topic,on_msg)
+
 time.sleep(2) # wait
 
-print("Publishing message to topic",cmd_topic)
+# send a off message 
+print("Publishing ",off_msg," to topic",cmd_topic)
 client.publish(cmd_topic,off_msg)
 
-print("Publishing message to topic",cmd_topic)
+# send a shutdown message 
+print("Publishing ",exit_msg," to topic",cmd_topic)
 client.publish(cmd_topic,exit_msg)
 
 time.sleep(4) # wait
