@@ -1,4 +1,4 @@
-""
+"""
 This is the controler that tells the HW driver what to do. 
 the topic that it publishes to are: 
 
@@ -19,6 +19,8 @@ to get the result of the command
 
 import paho.mqtt.client as mqtt 
 import RPi.GPIO as GPIO 
+import getopt
+import sys 
 import time
 
 broker_address="192.168.2.48" 
@@ -77,6 +79,11 @@ def on_disconnect(client, userdata, rc):
     if rc != 0:
         print("Unexpected disconnection.")
 
+def print_usage():
+    print(
+        "n.py [-n] [-f ] [-g] ")
+
+
 
 #----- MAIN -----
 def main(argv):
@@ -97,11 +104,11 @@ def main(argv):
 
     for opt, arg in opts:
         if opt in ("-n", "--on"):
-            cmd = on_cmd
+            cmd = on_msg
         elif opt in ("-f", "--off"):
-            cmd = off_cmd
+            cmd = off_msg
         elif opt in ("-g", "--get"):
-            cmd = get_cmd
+            cmd = get_msg
 
 
     if cmd == None:
@@ -132,17 +139,20 @@ def main(argv):
 
     # clear any old messages and subscribe to the status topic
     print("Starting subscription sta_topic",sta_topic)
-    client.subscribe(sta_topic)
+    client.subscribe(sta_topic,1)
 
     # send the message  
     print("Publishing ",cmd," to topic",cmd_topic)
     client.publish(cmd_topic,cmd)
 
     # wait for the responce 
-    while Gotstatus < 0: 
+    timeout = 0
+    while Gotstatus < 0 and timeout < 25: 
         time.sleep(0.1)
+        timeout += 1 
         print ("waiting for status ") 
     
+    client.unsubscribe(sta_topic)
     client.disconnect()
     print ( Gotstatus )
 
