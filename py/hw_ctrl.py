@@ -25,7 +25,7 @@ import time
 
 broker_address="192.168.2.48" 
 power_pin = 26 #last pin on the header
-MASTIMEOUT = 30
+MAXTIMEOUT = 30
 
 cmd_topic = "hotwater/power"
 sta_topic  = "hotwater/status"
@@ -46,6 +46,7 @@ def on_message_1(client, userdata, message):
     print("message retain flag=",message.retain)
 
 def on_message(client, userdata, msg):
+    global Gotstatus 
     print ("Topic: "+ msg.topic+"\nMessage: "+str(msg.payload.decode("utf-8")))
 
     #  status message re sponce
@@ -158,11 +159,12 @@ def main(argv):
     while Gotstatus < 0 and timeout < MAXTIMEOUT: 
         time.sleep(0.1)
         timeout += 1 
-        print ("waiting for status ") 
+        print ("waiting for status ",Gotstatus, timeout ) 
     
     client.unsubscribe(sta_topic)
+    client.loop_stop()
     client.disconnect()
-    print ( Gotstatus )
+    print ( "status: ",Gotstatus )
 
 
 if __name__ == "__main__":
