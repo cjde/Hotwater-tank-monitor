@@ -1,6 +1,6 @@
 """
 This is the controler that tells the HW driver what to do. 
-the topic that it publishes to are: 
+the topic message that it publishes to are: 
 
 hotwater/power on     - tells the HW driver to turn on the hotwater heater and returns the state  
 hotwater/power off    - tells the HW driver to turn off the hotwater heater and returns the state  
@@ -25,6 +25,7 @@ import time
 
 broker_address="192.168.2.48" 
 power_pin = 26 #last pin on the header
+MASTIMEOUT = 30
 
 cmd_topic = "hotwater/power"
 sta_topic  = "hotwater/status"
@@ -32,8 +33,8 @@ on_msg    = "on"
 off_msg   = "off"
 exit_msg   = "exit"
 get_msg = "get"
-clientid = "hw_device"
-#clientid = "hw_controller"
+#clientid = "hw_device"
+clientid = "hw_controller"
 
 Connected = False
 Gotstatus = -1 
@@ -78,6 +79,8 @@ def on_publish(client, userdata, mid):
 def on_disconnect(client, userdata, rc):
     if rc != 0:
         print("Unexpected disconnection.")
+    client.loop_stop() #stop the loop
+
 
 def print_usage():
     print(
@@ -87,7 +90,6 @@ def print_usage():
 
 #----- MAIN -----
 def main(argv):
-    client_id = None
     cmd = None
     verbose = False
     client_id = None
@@ -134,8 +136,14 @@ def main(argv):
     client.loop_start() 
 
     # wait for the connection to the broker be acked
-    while Connected != True: 
+    timeout = 0
+    while Connected != True and timeout < MAXTIMEOUT: 
+        timeout += 1 
         time.sleep(0.1)
+
+    if timeout == MAXTIMEOUT : 
+        print (" timed out waiting for connection to broker" )
+        sys.exit(2) 
 
     # clear any old messages and subscribe to the status topic
     print("Starting subscription sta_topic",sta_topic)
@@ -147,7 +155,7 @@ def main(argv):
 
     # wait for the responce 
     timeout = 0
-    while Gotstatus < 0 and timeout < 25: 
+    while Gotstatus < 0 and timeout < MAXTIMEOUT: 
         time.sleep(0.1)
         timeout += 1 
         print ("waiting for status ") 
