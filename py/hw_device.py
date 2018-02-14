@@ -69,7 +69,7 @@ def on_message(client, userdata, msg):
     client.publish(sta_topic,Gotstatus)
 
 def on_log(client, userdata, level, buf):
-    print("logging: ",buf)
+    print("logging: ",level,buf)
 
 def on_subscribe(client, userdata, mid, granted_qos):
     print("Subscription acknowledged ")

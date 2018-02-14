@@ -8,7 +8,7 @@ hotwater/power get    - the current state of the hotwater SCR is returned with o
 
 Typically this module is called to first getthe state and then if needed tset it to the desired state
 
-python hw_ctrl.py --get
+python hw_ctrl.py --get <--debug>
 python hw_ctrl.py --on
 python hw_ctrl.py --off
 
@@ -26,6 +26,7 @@ import time
 broker_address="192.168.2.48" 
 power_pin = 26 #last pin on the header
 MAXTIMEOUT = 30
+DEBUG = 0 
 
 cmd_topic = "hotwater/power"
 sta_topic  = "hotwater/status"
@@ -47,7 +48,9 @@ def on_message_1(client, userdata, message):
 
 def on_message(client, userdata, msg):
     global Gotstatus 
-    print ("Topic: "+ msg.topic+"\nMessage: "+str(msg.payload.decode("utf-8")))
+    global DEBUG 
+
+    if DEBUG: print ("Topic: "+ msg.topic+"\nMessage: "+str(msg.payload.decode("utf-8")))
 
     #  status message re sponce
     if sta_topic in msg.topic:
@@ -56,26 +59,29 @@ def on_message(client, userdata, msg):
         elif off_msg in msg.payload:
             Gotstatus = 0
         else:
-            print("Unknown status",msg.payload)
+            if DEBUG: print("Unknown status",msg.payload)
 
 
 def on_log(client, userdata, level, buf):
     print("logging: ",buf)
 
 def on_subscribe(client, userdata, mid, granted_qos):
-    print("Subscription acknowledged ")
+    global DEBUG
+    if DEBUG: print("Subscription acknowledged ")
 
 def on_connect(client, userdata, flags, rc):
     global Connected                #Use global variable
+    global DEBUG
 
     if rc == 0:
-        print("Connected to broker")
+        if DEBUG: print("Connected to broker")
         Connected = True                #Signal connection 
     else:
         print("Connection to broker failed")
 
 def on_publish(client, userdata, mid):
-    print ("on_publish mid: ",mid)
+    global DEBUG 
+    if DEBUG: print ("on_publish mid: ",mid)
 
 def on_disconnect(client, userdata, rc):
     if rc != 0:
@@ -85,7 +91,7 @@ def on_disconnect(client, userdata, rc):
 
 def print_usage():
     print(
-        "n.py [-n] [-f ] [-g] ")
+        "n.py [-n] [-f ] [-g] [-d]")
 
 
 
@@ -96,12 +102,13 @@ def main(argv):
     client_id = None
     dvr_id = "hw_device"
     ctl_id = "hw_controller"
+    global DEBUG 
 
     try:
-        opts, args = getopt.getopt(argv, "nfg", ["on","off","get"])
+        opts, args = getopt.getopt(argv, "nfgd", ["on","off","get","debug"])
     except getopt.GetoptError as s:
         print_usage()
-        sys.exit(2)
+        sys.exit(4)
 
     client_id=ctl_id
 
@@ -112,25 +119,27 @@ def main(argv):
             cmd = off_msg
         elif opt in ("-g", "--get"):
             cmd = get_msg
+        elif opt in ("-d", "--debug"):
+            DEBUG = 1 
 
 
     if cmd == None:
         print("You must provide  cmd in controller mode.\n")
         print_usage()
-        sys.exit(2)
+        sys.exit(5)
 
-    print("creating new controller instance")
+    if DEBUG: print("creating new controller instance")
     client = mqtt.Client(client_id) 
 
     # couple call backs to handle
     client.on_message=on_message
-    client.on_log=on_log
+    # client.on_log=on_log
     client.on_subscribe=on_subscribe
     client.on_connect=on_connect  
     client.on_disconnect = on_disconnect
     client.on_publish = on_publish
 
-    print("Starting connecting to broker")
+    if DEBUG: print("Starting connecting to broker")
     client.connect(broker_address) 
 
     # start the client loop to wait for incomming messages 
@@ -144,14 +153,14 @@ def main(argv):
 
     if timeout == MAXTIMEOUT : 
         print (" timed out waiting for connection to broker" )
-        sys.exit(2) 
+        sys.exit(6) 
 
     # clear any old messages and subscribe to the status topic
-    print("Starting subscription sta_topic",sta_topic)
+    if DEBUG:  print("Starting subscription sta_topic",sta_topic)
     client.subscribe(sta_topic,1)
 
     # send the message  
-    print("Publishing ",cmd," to topic",cmd_topic)
+    if DEBUG: print("Publishing ",cmd," to topic",cmd_topic)
     client.publish(cmd_topic,cmd)
 
     # wait for the responce 
@@ -159,12 +168,12 @@ def main(argv):
     while Gotstatus < 0 and timeout < MAXTIMEOUT: 
         time.sleep(0.1)
         timeout += 1 
-        print ("waiting for status ",Gotstatus, timeout ) 
+        if DEBUG: print ("waiting for status ",Gotstatus, timeout ) 
     
     client.unsubscribe(sta_topic)
     client.loop_stop()
     client.disconnect()
-    print ( "status: ",Gotstatus )
+    print Gotstatus 
 
 
 if __name__ == "__main__":
