@@ -1,0 +1,4 @@
+* * * * * python /home/pi/gpio/blink2.py
+* * * * * python /home/pi/hw_heater/HW_temps.py --mqtt --v
+* * * * * /home/pi/hw_heater/check_driver.sh
+
