@@ -2,27 +2,27 @@
 
 This is a hotwater tank monitoring applicaition. Attached to the A/C unit is a heat recovery unit. This provides hotwater through out the summer months. There is a Pi Zero that has 4 DS18B20 Digital temperature sensor (1 wire bus) that monitor the temperature of the tank at various points. These values are collected every minute and sent (via MQTT) to a PI "B" that is running MRTG ( and associated Web and DB ). The Pi"B" computes various energy components and the heat map of the tank. This goes into a very crude display ( mainly a PHP learning project ) to serve up to browsers.
 
-The PI zero has reciently been equipped with at 12V SPDT relay attached to pin 26 ( with a 2N2222 ). This double pole relay is the power control to both phases of 240V main for the heater. The the python script hw_driver.py  listens on the MQTT bus for the the topics hotwater/power with messages on,off,get and responds with on,off,unknown on the topic hotwater/status the status of the heater. The unknown message indicates that some unknown message was revieved.
+The PI zero has reciently been equipped with at 12V SPDT relay attached to pin 26 ( with a 2N2222 ). This double pole relay is the power control to both phases of 240V main for the heating elements. The the python script hw_driver.py listens on the MQTT bus for the the topics hotwater/power with messages on,off,get and responds with on,off,unknown on the topic hotwater/status. The unknown message indicates that some unknown message was recieved. ( Perhaps the hw_driver.py scrip is not listening? )
 
-The project consistes of a PI zero theat is attached to the hot water heater. Installed with py/HW_temps.py
+These files are copied into the working working directory on PI B that is also running a webserver
 
-These files are copied into the working working directory on the pi that is also running a webserver
 
-- py/HW_temps.py - Cron scheduled script that updates MQTT hotwater topic with a json structure containing temps and metadata about the waterheater
 - py/hw_ctrl.py - Controller script on the webserver PI that communicates with the hot water PI to control power via a MQTT message
-
+- py/HW_status.py - Main python script that collects the temperature data via a MQTT message from HW_temps.py
 - www/HW_status.php - PHP script that calls the HW_status.py to get the data from the hotwater pi and displays it
 - www/script.js - implements that button callback for the power button
 - www/gpio.php  - target of the javascript button push, calls the hw_ctrl.py to send the on off command to the MQTT topic hotwater/power
 - www/poweroff.png - icon of the power button when off
 - www/poweron.png - icon of the power button when on
-- www/favicon.ico - iicon for the webpage ocon
+- www/favicon.ico - icon for the webpage ocon
 
 
 
-These files are installed on the Pi that is attached to the temperature sensoors that are attached to the hotwater heater
+These files are installed on the Pi that is attached to the temperature sensors that are attached to the hotwater heater
 
-- py/HW_status.py - Main python script that collects the temperature data via a MQTT message from HW_temps.py
+- py/HW_temps.py - Cron scheduled script that updates MQTT hotwater topic with a json structure containing temps and metadata about the waterheater
 - py/hw_device.py - Daemon script running on the hotwater PI to respond to power control requests from hw_ctrl.py
 - py/Calibration.json - Calabration data for the temperature sensors
+- py/check_driver.sh - bash watchdog script to make sure that the HW driver is running 
+- py/crontab - example crontab that publishes temperatures every minute ( via MQTT) and restartes the device driver if there it exits 
 
