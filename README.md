@@ -24,5 +24,5 @@ These files are installed on the Pi that is attached to the temperature sensors 
 - py/hw_device.py - Daemon script running on the hotwater PI to respond to power control requests from hw_ctrl.py
 - py/Calibration.json - Calabration data for the temperature sensors
 - py/check_driver.sh - bash watchdog script to make sure that the HW driver is running 
-- py/crontab - example crontab that publishes temperatures every minute ( via MQTT) and restartes the device driver if there it exits 
+- py/crontab - example crontab that publishes temperatures every minute ( via MQTT) and restartes the device driver if it exits 
 
