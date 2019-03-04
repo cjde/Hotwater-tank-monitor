@@ -19,8 +19,9 @@ These files are copied into the working working directory on PI B that is also r
 
 
 These files are installed on the Pi that is attached to the temperature sensors that are attached to the hotwater heater
-```
+
 - py/HW_temps.py - Cron scheduled script that updates MQTT hotwater topic with a json structure containing temps and metadata about the waterheater
+```
   usage: HW_temps.py [-h] [--verbose] [--calibrate CALIBRATE] [--simulate]
                    [--test_calibration TEST_CALIBRATION] [--mqtt]
 
@@ -40,7 +41,22 @@ These files are installed on the Pi that is attached to the temperature sensors 
    --mqtt, -m            Publish to MQTT server
 ```
 - py/hw_device.py - Daemon script running on the hotwater PI to respond to power control requests from hw_ctrl.py
-- py/Calibration.json - Calabration data for the temperature sensors
-- py/check_driver.sh - bash watchdog script to make sure that the HW driver is running 
-- py/crontab - example crontab that publishes temperatures every minute ( via MQTT) and restartes the device driver if it exits 
+```It listens continously for the MQtt hotwater/power topic for these messages:
+
+hotwater/power on     - the GPIO pin hat is controling the SSR of the hotwater heater is turned on
+hotwater/power off    - the GPIO pin hat is controling the SSR of the hotwater heater is turned off
+hotwater/status       - the current state of the hotwater SCR is returned
+```
+- py/Calibration.json - Calabration data for the temperature sensors In this example the top thermometer is needs 0.5 degrees to make it read the same as the others during the calabration run 
+```
+[
+    0.5,
+    0.0,
+    0.0,
+    0.0
+]
+```
+- py/check_driver.sh - bash watchdog script to make sure that the HW driver is running ( run from cron ) 
+- py/crontab - example crontab that publishes temperatures every minute ( via MQTT) and restartes the device driver if it exits and blinks the HB LED to signal that it is functioning corretly 
+- blink2.py - script that is started by cron evey minute and blinks the green LED to signal that it is healthy.  
 
