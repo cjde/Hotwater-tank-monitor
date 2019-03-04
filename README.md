@@ -21,6 +21,24 @@ These files are copied into the working working directory on PI B that is also r
 These files are installed on the Pi that is attached to the temperature sensors that are attached to the hotwater heater
 
 - py/HW_temps.py - Cron scheduled script that updates MQTT hotwater topic with a json structure containing temps and metadata about the waterheater
+  usage: HW_temps.py [-h] [--verbose] [--calibrate CALIBRATE] [--simulate]
+                   [--test_calibration TEST_CALIBRATION] [--mqtt]
+
+  Hotwater temp probe
+  
+  optional arguments:
+    -h, --help            show this help message and exit
+   --verbose, -v         verbose flag
+   --calibrate CALIBRATE, -c CALIBRATE
+                         Calculate calibration offsets. A value of 0 will load
+                         the defaults
+   --simulate, -s        simulate the device files instead of using the ones on
+                         the PI
+   --test_calibration TEST_CALIBRATION, -t TEST_CALIBRATION
+                         Number or temp collections to run and apply the
+                         calibration amount
+   --mqtt, -m            Publish to MQTT server
+
 - py/hw_device.py - Daemon script running on the hotwater PI to respond to power control requests from hw_ctrl.py
 - py/Calibration.json - Calabration data for the temperature sensors
 - py/check_driver.sh - bash watchdog script to make sure that the HW driver is running 
