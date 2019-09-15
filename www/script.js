@@ -1,9 +1,6 @@
 ﻿//TheFreeElectron 2015, http://www.instructables.com/member/TheFreeElectron/
 //JavaScript, uses pictures as buttons, sends and receives values to/from the Rpi
 //These are all the buttons
-// This javascript is run on the client browser behind hte powerbutton. 
-// it calls the to tell the php script on the server 
-// 
 var button_0 = document.getElementById("button_0");
 
 //This function is asking for gpio.php, receiving datas and updating the index.php pictures
@@ -12,31 +9,27 @@ var data = 0;
 //send the pic number to gpio.php for changes
 //this is the http request
 	var request = new XMLHttpRequest();
-	request.open( "GET" , "gpio.php", true);
+	request.open( "GET" , "gpio.php?pic=" + pic, true);
 	request.send(null);
 	//receiving informations
 	request.onreadystatechange = function () {
 		if (request.readyState == 4 && request.status == 200) {
 			data = request.responseText;
 			//update the index pic
-			if ( !(data.localeCompare("0\n")) ){
+			if ( !(data.match(/0/)) ){
+                                button_0.src = "data/img/red/red.jpg";
 			        button_0.src = "poweroff.png";
-				// alert ("off" );
 			}
-			else if ( !(data.localeCompare("1\n")) ) {
+			else if ( !(data.match(/1/)) ) {
+                                 button_0.src = "data/img/green/green.jpg"
 				 button_0.src = "poweron.png";
-				// alert ("on" );
 			}
-			else if ( !(data.localeCompare("2\n"))) {
-				alert ("Something went wrong! not 0 or 1 " );
+			else if ( !(data.localeCompare("fail"))) {
+				alert ("Something went wrong! 1" + request.responseText );
 				return ("fail");			
 			}
-                        else if ( !(data.localeCompare("-1\n"))) {
-                                alert ("No responce from HW heater driver " );
-                                return ("fail");
-                        }
 			else {
-				alert ("Something else went wrong!" );
+				alert ("Something went wrong! 2" + request.responseText );
 				return ("fail"); 
 			}
 		}
@@ -47,7 +40,7 @@ var data = 0;
 		}
 		//else 
 		else if (request.readyState == 4 && request.status != 200 && request.status != 500 ) { 
-			alert ("Something went wrong!");
+			alert ("Something went wrong! 3");
 			return ("fail"); }
 	}	
 	
