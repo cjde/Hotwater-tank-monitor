@@ -24,7 +24,7 @@ import sys
 import time
 
 broker_address="192.168.2.48" 
-power_pin = 26 #last pin on the header
+power_pin = 37 #last pin on the header
 MAXTIMEOUT = 30
 DEBUG = 0 
 
