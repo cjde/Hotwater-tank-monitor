@@ -14,7 +14,7 @@ import getopt
 import sys
 
 broker_address="192.168.2.48" 
-power_pin = 26 #last pin on the header
+power_pin = 37 #last pin on the header
 MAXTIMEOUT = 60 
 
 cmd_topic  = "hotwater/power"
@@ -93,7 +93,7 @@ def on_disconnect(client, userdata, rc):
 
 def print_usage():
     print(
-        "n.py [-g] ")
+        "hw_device.py [-d] ")
 
 
 
