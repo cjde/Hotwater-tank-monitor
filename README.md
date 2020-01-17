@@ -60,3 +60,10 @@ hotwater/status       - the current state of the hotwater SCR is returned
 - py/crontab - example crontab that publishes temperatures every minute ( via MQTT) and restartes the device driver if it exits and blinks the HB LED to signal that it is functioning corretly 
 - blink2.py - script that is started by cron evey minute and blinks the green LED to signal that it is healthy.  
 
+# Testing 
+
+monitor the messages for the hotwater pi 
+- mosquitto_sub --id 1  -c -q 2 -h 192.168.2.48 -t /hotwater
+
+send commands t othe hotwater pi 
+- ~/hw_heater/repo/py $ python hw_ctrl.py --get | --on | -- off 
