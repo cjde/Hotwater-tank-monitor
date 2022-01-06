@@ -24,6 +24,7 @@ import sys
 import time
 
 broker_address="192.168.2.48" 
+#broker_address="192.168.2.10" 
 power_pin = 37 #last pin on the header
 MAXTIMEOUT = 30
 DEBUG = 0 
@@ -74,7 +75,7 @@ def on_connect(client, userdata, flags, rc):
     global DEBUG
 
     if rc == 0:
-        if DEBUG: print("Connected to broker")
+        if DEBUG: print("Connected to broker",broker_address)
         Connected = True                #Signal connection 
     else:
         print("Connection to broker failed")

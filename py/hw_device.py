@@ -13,7 +13,7 @@ import time
 import getopt
 import sys
 
-broker_address="192.168.2.48" 
+broker_address="192.168.2.10" 
 power_pin = 37 #last pin on the header
 MAXTIMEOUT = 60 
 

@@ -56,7 +56,7 @@ ROOM_TEMP=74.0
 
 
 # HWHEATER_URL = 'http://192.168.1.2/hw/HW_temps.php'
-HWHEATER_URL = 'http://192.168.1.15/hw/HW_temps.php'
+HWHEATER_URL = 'http://192.168.2.15/hw/HW_temps.php'
 
 # right and left side of heat map labels
 RSCALE={}
