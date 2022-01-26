@@ -1,9 +1,10 @@
 """
 This is the service that runs on the hotwater heater pi. It listens
-continously for the hotwater/power topic for these   messages:
+continously on the hotwater/power and publishes on the hotwater/statys
+topic for these   messages:
 
-hotwater/power on     - the GPIO pin hat is controling the SSR of the hotwater heater is turned on
-hotwater/power off    - the GPIO pin hat is controling the SSR of the hotwater heater is turned off
+hotwater/power ON     - the GPIO pin hat is controling the SSR of the hotwater heater is turned on
+hotwater/power OFF    - the GPIO pin hat is controling the SSR of the hotwater heater is turned off
 hotwater/status       - the current state of the hotwater SCR is returned
 """
 
@@ -17,9 +18,9 @@ import RPi.GPIO as GPIO
 # message from MQTT ( in "byte" format )
 PAYLOAD = ''
 DEBUG = ""
-CMDTOPIC   =  "hotwater-v2/power"
+CMDTOPIC    =  "hotwater-v2/power"
 STATUSTOPIC = "hotwater-v2/status"
-CLIENTID   = "hw_devicev2"
+CLIENTID    = "hw_devicev2"
 PORT = 1883
 MAXTIMEOUT = 60
 ON_MSG     = 'ON'
@@ -32,7 +33,8 @@ User = "mqttuser"
 Password = "mqttpass"
 client_id = "hw_devicev2"
 
-power_pin = 37 #last pin on the header, FYI pin 39 is GND
+#last pin on the header, FYI pin 39 is GND so use a 56 ohm resister with a test LED
+power_pin = 37
 
 
 # The callback for when a PUBLISH message is received from the server.
@@ -105,8 +107,18 @@ def on_connect(client, userdata, flags, rc):
     4: Connection refused – bad username or password
     5: Connection refused – not authorised
 '''
-    if  rc==0 :
+    if  rc == 0 :
         print("Connected OK, result code "+str(rc))
+    elif rc == 1:
+        print ("Connection refused – incorrect protocol version")
+    elif rc == 2:
+        print("Connection refused – invalid client identifier")
+    elif rc == 3:
+        print("Connection refused – server unavailable")
+    elif rc == 4:
+        print("Connection refused – bad username or password")
+    elif rc == 5:
+        print("Connection refused – not authorised")
     else:
         print("Connected Failed, result code "+str(rc))
 
@@ -134,16 +146,16 @@ def on_disconnect(client, userdata, rc):
 
 if __name__ == '__main__':
     # usage:
-    #  python  nokia_LCD_subscribe.py  --debug --broker homeassistant.hm --user mqttuser --password mqttpass '
+    #  python  hw_device.py  --debug --broker homeassistant.hm --user mqttuser --password mqttpass '
 
-    parser = argparse.ArgumentParser(description='Nokia LCD subscription ')
+    parser = argparse.ArgumentParser(description='Hotwater MQTT device driver')
 
     parser.add_argument('--broker','-o',
                         type=str,
                         help='IP or name of MQTT broker' )
     parser.add_argument('--user','-u',
                         type=str,
-                        help='Username for QQTT broker' )
+                        help='Username for MQTT broker' )
     parser.add_argument('--password','-p',
                         type=str,
                         help='Password for MQTT broker' )
@@ -181,11 +193,11 @@ if __name__ == '__main__':
     client.on_subscribe = on_subscribe
     client.on_publish = on_publish
 
-
+    # home assistant has a user and a password set now
     client.username_pw_set(username=User, password=Password)
     client.connect(MQTTbroker, port=PORT)
 
-    # send a test message
+    # send the message
     if DEBUG: print("Publishing ",DEVICESTATE," to topic",STATUSTOPIC)
     client.publish(STATUSTOPIC,DEVICESTATE)
 
