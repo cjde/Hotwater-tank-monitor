@@ -143,6 +143,10 @@ if __name__ == '__main__':
                         action='store_true',
                         help='Get status.')
 
+    parser.add_argument('--homeassist','-ha',
+                        action='store_true',
+                        help='Output ON,OFF, Unknown status instead of numeric')
+
     args = parser.parse_args()
 
     if args.debug:
@@ -203,8 +207,13 @@ if __name__ == '__main__':
             timeout += 1
             if DEBUG: print("Waiting for status ", DEVICESTATE, timeout)
 
-        # Ok got a responce from the GET were done here!
-        print (DEVICESTATE)
+        # Ok got a responce from the GET, is this output for home assitant or the old PHP page
+        if not args.homeassist:
+            if DEVICESTATE == ON_MSG: print( "1" )
+            elif DEVICESTATE == OFF_MSG:   print( "0" )
+            else: print( "-1" )
+        else:
+            print (DEVICESTATE)
 
     client.loop_stop()
     client.disconnect()
