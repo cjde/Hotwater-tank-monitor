@@ -9,7 +9,7 @@
 
 <?php 
 echo "<pre>";
-$json_str = shell_exec("/usr/bin/python /home/pi/hw_heater/HW_status.py -o hotwater.jpg" );
+$json_str = shell_exec("/usr/bin/python3 /home/pi/hw_heater/HW_status.py -o hotwater.jpg" );
 $json_obj = json_decode( $json_str );
 $gooo=111;
 echo "</pre>";
