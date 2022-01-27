@@ -114,8 +114,8 @@ def on_subscribe(client, userdata, mid, granted_qos):
 
 def on_disconnect(client, userdata, rc):
     if rc != 0:
-        print("Unexpected disconnection.")
-    client.loop_stop() #stop the loop
+        print("Unexpected disconnect code: ", rc)
+
 
 if __name__ == '__main__':
     # usage:
@@ -171,6 +171,11 @@ if __name__ == '__main__':
     if DEBUG: print("Publishing ",LCDSTATE," to topic",STATUSTOPIC)
     client.publish(STATUSTOPIC,LCDSTATE)
 
-    client.loop_forever()
+    try:
+        client.loop_forever()
+    except KeyboardInterrupt:
+        nokia_lcd.backlight(False)
+        client.loop_stop() #stop the loop
+        client.disconnect()
 
 

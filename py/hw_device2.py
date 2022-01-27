@@ -31,7 +31,6 @@ BADJSON = "-1"
 MQTTbroker = "homeassistant.hm"
 User = "mqttuser"
 Password = "mqttpass"
-client_id = "hw_devicev2"
 
 #last pin on the header, FYI pin 39 is GND so use a 56 ohm resister with a test LED
 power_pin = 37
@@ -83,13 +82,9 @@ def on_message(client, userdata, msg):
                 client.publish(STATUSTOPIC, BADJSON)
                 return False
 
-            # save the state for the next time
-            DEVICESTATE = decoded
             if DEBUG:
-                print ("JSON payloads:",len(dic) )
-                for msgid in range(len(dic)):
-                    print("Got data from MQTT:",dic[msgid]["linenum"], dic[msgid]["msg"], dic[msgid]["backlight"] )
-        return True
+                print ("JSON payloads:",len(dic), dic )
+            return True
     except:
         print ("Bad data in binary message: ",str(PAYLOAD))
         return False
@@ -139,8 +134,7 @@ def on_subscribe(client, userdata, mid, granted_qos):
         print("Subscription acknowledged ")
 
 def on_disconnect(client, userdata, rc):
-    if rc != 0:
-        print("Unexpected disconnection.")
+    print("Disconnecting, Cleaning up GPIO.")
     GPIO.cleanup()
     client.loop_stop() #stop the loop
 
@@ -178,14 +172,14 @@ if __name__ == '__main__':
         Password = args.password
 
     if DEBUG:
-        print("Connecting to: ",MQTTbroker," User: ",User, " Password: ",Password, " Client", client_id)
+        print("Connecting to: ",MQTTbroker," User: ",User, " Password: ",Password, " Client", CLIENTID)
 
     # Setup the GPIO pins before the callbacks , Board numbering
     GPIO.setmode(GPIO.BOARD)
     GPIO.setwarnings(False)
     GPIO.setup(power_pin, GPIO.OUT)
 
-    client = mqtt.Client(client_id)
+    client = mqtt.Client(CLIENTID)
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
     client.on_message = on_message
@@ -201,5 +195,8 @@ if __name__ == '__main__':
     if DEBUG: print("Publishing ",DEVICESTATE," to topic",STATUSTOPIC)
     client.publish(STATUSTOPIC,DEVICESTATE)
 
-    client.loop_forever()
-
+    try:
+        client.loop_forever()
+    except KeyboardInterrupt:
+        client.disconnect()
+        client.loop_stop() #stop the loop

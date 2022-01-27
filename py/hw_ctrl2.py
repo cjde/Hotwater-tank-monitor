@@ -1,10 +1,13 @@
 """
-This is the service that runs on the hotwater heater pi. It listens
-continously for the hotwater/power topic for these   messages:
+This is the command line tool that is used to send on and off commands to the hot water PI
+The commands to turn on, off and get ( the current state )  are
 
-hotwater/power on     - the GPIO pin hat is controling the SSR of the hotwater heater is turned on
-hotwater/power off    - the GPIO pin hat is controling the SSR of the hotwater heater is turned off
-hotwater/status       - the current state of the hotwater SCR is returned
+python hw_ctrl.py -n
+python hw_ctrl.py -f
+python hw_ctrl.py -g
+
+
+
 """
 
 import paho.mqtt.client as mqtt
@@ -22,7 +25,7 @@ CMDTOPIC   =  "hotwater-v2/power"
 STATUSTOPIC = "hotwater-v2/status"
 CLIENTID   = "hw_controller2"
 PORT = 1883
-# Time out waiting for a responce from the heater
+# Retries for a GET responce from the heater
 MAXRETRY = 10
 ON_MSG     = 'ON'
 OFF_MSG    = 'OFF'
@@ -32,7 +35,6 @@ BADJSON = "-1"
 MQTTbroker = "homeassistant.hm"
 User = "mqttuser"
 Password = "mqttpass"
-#client_id = "hw_devicev2"
 
 
 # The callback for when a PUBLISH message is received from the server.
@@ -57,6 +59,9 @@ def on_message(client, userdata, msg):
         elif decoded == OFF_MSG :
             if DEBUG: print("OFF")
             DEVICESTATE = decoded
+        elif decoded == "Unknown" :
+            if DEBUG: print("Unknown")
+            DEVICESTATE = decoded
         elif decoded == BADJSON :
             if DEBUG: print("Hotwater has recieved bad JSON data.")
             DEVICESTATE = decoded
@@ -64,32 +69,33 @@ def on_message(client, userdata, msg):
             print ("Unknown responce to a GET message:")
             return False
     except:
-        print ("Cannot decode message feom hotwater: ",str(PAYLOAD))
+        print ("Cannot decode message from hotwater: ",str(PAYLOAD))
         return False
     return True
 
 def on_connect(client, userdata, flags, rc):
-    '''
+    """
     Subscribes to the hotwater topic and prints the message
     The callback for when the client receives a CONNACK response from the server.
-
-    Connection Return Codes
-    0: Connection successful
-    1: Connection refused – incorrect protocol version
-    2: Connection refused – invalid client identifier
-    3: Connection refused – server unavailable
-    4: Connection refused – bad username or password
-    5: Connection refused – not authorised
-    '''
-
-    if  rc==0 :
+    """
+    if  rc == 0 :
         if DEBUG: print("Connected OK, result code "+str(rc))
+    elif rc == 1:
+        print ("Connection refused – incorrect protocol version")
+    elif rc == 2:
+        print("Connection refused – invalid client identifier")
+    elif rc == 3:
+        print("Connection refused – server unavailable")
+    elif rc == 4:
+        print("Connection refused – bad username or password")
+    elif rc == 5:
+        print("Connection refused – not authorised")
     else:
         print("Connected Failed, result code "+str(rc))
 
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
-    client.subscribe(CMDTOPIC)
+    ### ? client.subscribe(CMDTOPIC)
 
 def on_publish(client, userdata, mid):
     if DEBUG:
@@ -108,8 +114,6 @@ def on_disconnect(client, userdata, rc):
         print("Unexpected disconnection.")
 
 if __name__ == '__main__':
-    # usage:
-    #  python  nokia_LCD_subscribe.py  --debug --broker homeassistant.hm --user mqttuser --password mqttpass '
 
     # default command is GET
     cmd = STATUS_MSG
