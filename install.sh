@@ -25,17 +25,17 @@ fi
 These files are copied into the working working directory on the pi that is also running a webserver
 
 - py/HW_temps.py - Cron scheduled script that updates MQTT hotwater topic with a json structure containing temps and metadata about the waterheater
-- py/hw_ctrl.py - Controller script on the webserver PI that communicates with the hot water PI to control power via a MQTT message
+- py/hw_ctrl2.py - Controller script on the webserver PI that communicates with the hot water PI to control power via a MQTT message
 
 These files are installed on the Pi that is attached to the temperature sensoors that are attached to the hotwater heater
 
 - py/HW_status.py - Main python script that collects the temperature data via a MQTT message from HW_temps.py
-- py/hw_device.py - Daemon script running on the hotwater PI to respond to power control requests from hw_ctrl.py
+- py/hw_device2.py - Daemon script running on the hotwater PI to respond to power control requests from hw_ctrl2.py
 - py/Calibration.json - Calabration data for the temperature sensors
 
 - www/HW_status.php - PHP script that calls the HW_status.py to get the data from the hotwater pi and displays it
 - www/script.js - implements that button callback for the power button
-- www/gpio.php  - target of the javascript button push, calls the hw_ctrl.py to send the on off command to the MQTT topic hotwater/power
+- www/gpio.php  - target of the javascript button push, calls the hw_ctrl2.py to send the on off command to the MQTT topic hotwater/power
 - www/poweroff.png - icon of the power button when off
 - www/poweron.png - icon of the power button when on
 - www/favicon.ico - iicon for the webpage ocon

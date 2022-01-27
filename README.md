@@ -7,11 +7,11 @@ The PI zero has reciently been equipped with at 12V SPDT relay attached to pin 2
 These files are copied into the working working directory on PI B that is also running a webserver
 
 
-- py/hw_ctrl.py - Controller script on the webserver PI that communicates with the hot water PI to control power via a MQTT message
+- py/hw_ctrl2.py - Controller script on the webserver PI that communicates with the hot water PI to control power via a MQTT message
 - py/HW_status.py - Main python script that collects the temperature data via a MQTT message from HW_temps.py
 - www/HW_status.php - PHP script that calls the HW_status.py to get the data from the hotwater pi and displays it
 - www/script.js - implements that button callback for the power button
-- www/gpio.php  - target of the javascript button push, calls the hw_ctrl.py to send the on off command to the MQTT topic hotwater/power
+- www/gpio.php  - target of the javascript button push, calls the hw_ctrl2.py to send the on off command to the MQTT topic hotwater/power
 - www/poweroff.png - icon of the power button when off
 - www/poweron.png - icon of the power button when on
 - www/favicon.ico - icon for the webpage ocon
@@ -40,7 +40,7 @@ These files are installed on the Pi that is attached to the temperature sensors 
                          calibration amount
    --mqtt, -m            Publish to MQTT server
 ```
-- py/hw_device.py - Daemon script running on the hotwater PI to respond to power control requests from hw_ctrl.py
+- py/hw_device2.py - Daemon script running on the hotwater PI to respond to power control requests from hw_ctrl2.py
 ```It listens continously for the MQtt hotwater/power topic for these messages:
 
 hotwater/power on     - the GPIO pin hat is controling the SSR of the hotwater heater is turned on
@@ -66,4 +66,4 @@ monitor the messages for the hotwater pi
 - mosquitto_sub --id 1  -c -q 2 -h 192.168.2.48 -t /hotwater
 
 send commands t othe hotwater pi 
-- ~/hw_heater/repo/py $ python hw_ctrl.py --get | --on | -- off 
+- ~/hw_heater/repo/py $ python hw_ctrl2.py --get | --on | -- off 

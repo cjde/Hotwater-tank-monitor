@@ -23,10 +23,10 @@
 *   * * * * python /home/pi/hw_heater/blink2.py
 *   * * * * python /home/pi/hw_heater/HW_temps.py --mqtt --v
 *   * * * * /home/pi/hw_heater/check_driver.sh
-30 17 * * * python /home/pi/hw_heater/repo/py/hw_ctrl.py --on 
-30 19 * * * python /home/pi/hw_heater/repo/py/hw_ctrl.py --off
+30 17 * * * python /home/pi/hw_heater/repo/py/hw_ctrl2.py --on 
+30 19 * * * python /home/pi/hw_heater/repo/py/hw_ctrl2.py --off
 #
 # turn off just incase it get left on from the UI
-00 00 * * * python /home/pi/hw_heater/repo/py/hw_ctrl.py --off
+00 00 * * * python /home/pi/hw_heater/repo/py/hw_ctrl2.py --off
 
 

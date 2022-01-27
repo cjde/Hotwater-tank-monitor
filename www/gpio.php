@@ -15,20 +15,20 @@
 //    quicker turn around and would only incure one MQTT message
 
 //reading pin's status
-exec ("/usr/bin/python /var/www/ceeberry/onebut/hw_ctrl.py -g", $output, $rt );
+exec ("/usr/bin/python /var/www/ceeberry/onebut/hw_ctrl2.py -g", $output, $rt );
 $st = end( $output); 
 // echo "get status is ",$st; 
 
 if ($st == "1" ) {
    // if on turn it off 
-   exec ("/usr/bin/python /var/www/ceeberry/onebut/hw_ctrl.py -f", $output, $rt );
+   exec ("/usr/bin/python /var/www/ceeberry/onebut/hw_ctrl2.py -f", $output, $rt );
    $st = end( $output);
    // echo "was on, now:",$st; 
    //print_r ( $output);
 }
 else if ($st == "0" ) {
    // if off turn it on 
-   exec ("/usr/bin/python /var/www/ceeberry/onebut/hw_ctrl.py -n", $output, $rt );
+   exec ("/usr/bin/python /var/www/ceeberry/onebut/hw_ctrl2.py -n", $output, $rt );
    $st = end( $output);
    // echo "was off, now:",$st; 
    //print_r ( $output);
@@ -40,7 +40,7 @@ else if ($st == "-1" ) {
 }
 else  {
    // hmmm.... somethin wrong in python land ! 
-   echo "Bad return code from /usr/bin/python hw_ctrl.py ";
+   echo "Bad return code from /usr/bin/python hw_ctrl2.py ";
    print_r ( $output);
 }
 
