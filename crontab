@@ -22,11 +22,11 @@
 #m  h  dom mon dow   command
 *   * * * * python /home/pi/hw_heater/blink2.py
 *   * * * * python /home/pi/hw_heater/HW_temps.py --mqtt --v
-*   * * * * /home/pi/hw_heater/repo/check_driver.sh
-30 17 * * * python3 /home/pi/hw_heater/repo/py/hw_ctrl2.py --on 
-30 19 * * * python3 /home/pi/hw_heater/repo/py/hw_ctrl2.py --off
+#*   * * * * pi /home/pi/hw_heater/repo/check_driver.sh
+30 17 * * * pi python3 /home/pi/hw_heater/repo/py/hw_ctrl2.py --on 
+30 19 * * * pi python3 /home/pi/hw_heater/repo/py/hw_ctrl2.py --off
 #
 # turn off just incase it get left on from the UI
-00 00 * * * python3 /home/pi/hw_heater/repo/py/hw_ctrl2.py --off
+00 00 * * * pi python3 /home/pi/hw_heater/repo/py/hw_ctrl2.py --off
 
 
