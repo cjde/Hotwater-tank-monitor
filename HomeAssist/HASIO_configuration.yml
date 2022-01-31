@@ -1,0 +1,35 @@
+# This section goes under the light section 
+#
+#  The interesting thing that is learned is the On and OFF 
+#  parts of the message match what HA is expecting to see. 
+# and the jJSON message comming back is enclosed in [ ] 
+
+light:
+ - platform: mqtt
+   name: Hotwater
+   command_topic: hotwater-v2/power
+   # state_topic: hotwater-v2/status
+   qos: 0
+
+ - platform: mqtt
+   name: Backlight
+   command_topic: "hotwater-v2/nokia_lcd/cmd"
+   state_topic: "hotwater-v2/nokia_lcd/status"
+   value_template: "{{ value_json[0].backlight }}"
+   qos: 0
+
+sensor:
+ - platform: mqtt
+   unique_id: "backlight_sensor_id"
+   name: BacklightSensor
+   state_topic:  "hotwater-v2/nokia_lcd/status"
+   value_template: "{{ value_json[0].backlight }}"
+
+
+switch:
+ platform: mqtt
+ name: MessageOnLCD
+ command_topic: hotwater-v2/nokia_lcd/cmd
+ qos: 0
+ payload_off: "[{\"linenum\": 0, \"msg\": \"The OFF msg   \",\"backlight\":\"OFF\"}]"
+ payload_on: "[{\"linenum\": 0, \"msg\": \"   The ON msg\",\"backlight\":\"ON\"}]"

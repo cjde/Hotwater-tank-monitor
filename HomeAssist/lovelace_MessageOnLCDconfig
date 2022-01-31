@@ -1,0 +1,8 @@
+type: button
+tap_action:
+  action: toggle
+entity: switch.messageonlcd
+show_state: true
+icon: mdi:card-text
+icon_height: 30px
+

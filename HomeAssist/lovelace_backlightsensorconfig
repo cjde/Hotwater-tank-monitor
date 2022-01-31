@@ -1,0 +1,9 @@
+type: entities
+entities:
+  - entity: sensor.backlightsensor
+state_color: true
+show_header_toggle: true
+header:
+  type: buttons
+  entities: []
+

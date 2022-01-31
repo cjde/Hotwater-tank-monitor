@@ -1,0 +1,7 @@
+type: button
+tap_action:
+  action: toggle
+entity: light.backlight
+name: LCD backlight
+icon_height: 40px
+

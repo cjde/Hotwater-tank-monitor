@@ -1,0 +1,8 @@
+type: button
+tap_action:
+  action: toggle
+entity: light.hotwater
+show_state: true
+icon: mdi:desktop-tower
+
+
