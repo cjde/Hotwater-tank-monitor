@@ -13,6 +13,7 @@ import json
 import re
 import argparse
 import RPi.GPIO as GPIO
+import os
 
 
 # message from MQTT ( in "byte" format )
@@ -20,7 +21,8 @@ PAYLOAD = ''
 DEBUG = ""
 CMDTOPIC    =  "hotwater-v2/power"
 STATUSTOPIC = "hotwater-v2/status"
-CLIENTID    = "hw_devicev2"
+myhost = os.uname()[1]
+CLIENTID    = "hw_devicev2" + "-" +  myhost
 PORT = 1883
 MAXTIMEOUT = 60
 ON_MSG     = 'ON'
