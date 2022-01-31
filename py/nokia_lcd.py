@@ -133,10 +133,10 @@ def write( linenum, msg, bklight ):
     scrbuf[linenum]["text"] = msg
 
     # turn on the Backlight?
-    if ( bklight==1 ):
-        backlight ( True )
+    if ( bklight=="ON" ):
+        backlight ( 1 )
     else:
-        backlight ( False )
+        backlight ( 0 )
 
     display.image(image)
     display.show()

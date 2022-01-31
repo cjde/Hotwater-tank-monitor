@@ -14,7 +14,7 @@ PORT = 1883
 ON_MSG     = 'ON'
 OFF_MSG    = 'OFF'
 STATUS_MSG = 'GET'
-LCDSTATE  = "Unknown"
+LCDSTATE  = "[{\"backlight\":\"OFF\"}]"
 MQTTbroker = "homeassistant.hm"
 User = "mqttuser"
 Password = "mqttpass"
@@ -66,17 +66,15 @@ def on_message(client, userdata, msg):
             if DEBUG:
                 print("ON")
             nokia_lcd.backlight( True )
-            LCDSTATE = decoded
+            LCDSTATE = "[{\"backlight\":\"ON\"}]"
         elif decoded == OFF_MSG:
             if DEBUG:
                 print("OFF")
             nokia_lcd.backlight( False )
-            LCDSTATE = decoded
+            LCDSTATE =  "[{\"backlight\":\"OFF\"}]"
         elif decoded == STATUS_MSG:
             if DEBUG:
                 print("STATUS")
-            if DEBUG: print("Publishing ", LCDSTATE, " to topic", STATUSTOPIC)
-            client.publish(STATUSTOPIC, LCDSTATE)
         else:
             # check if it is JSON data
             try:
@@ -94,6 +92,8 @@ def on_message(client, userdata, msg):
             for msgid in range(len(dic)):
                 nokia_lcd.write( dic[msgid]["linenum"], dic[msgid]["msg"], dic[msgid]["backlight"] )
 
+        if DEBUG: print("Publishing ", LCDSTATE, " to topic", STATUSTOPIC)
+        client.publish(STATUSTOPIC, LCDSTATE, retain=True)
         return True
 
     except:
@@ -169,7 +169,7 @@ if __name__ == '__main__':
 
     # send a test message
     if DEBUG: print("Publishing ",LCDSTATE," to topic",STATUSTOPIC)
-    client.publish(STATUSTOPIC,LCDSTATE)
+    client.publish(STATUSTOPIC,LCDSTATE, retain=True)
 
     try:
         client.loop_forever()
