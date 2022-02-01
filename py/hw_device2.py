@@ -28,7 +28,7 @@ MAXTIMEOUT = 60
 ON_MSG     = 'ON'
 OFF_MSG    = 'OFF'
 STATUS_MSG = 'GET'
-DEVICESTATE  = "Unknown"
+DEVICESTATE  = "OFF"
 BADJSON = "-1"
 MQTTbroker = "homeassistant.hm"
 User = "mqttuser"
@@ -180,6 +180,7 @@ if __name__ == '__main__':
     GPIO.setmode(GPIO.BOARD)
     GPIO.setwarnings(False)
     GPIO.setup(power_pin, GPIO.OUT)
+    GPIO.output(power_pin, False)
 
     client = mqtt.Client(CLIENTID)
     client.on_connect = on_connect
