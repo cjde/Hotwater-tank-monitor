@@ -12,7 +12,17 @@ import re
 import json
 import argparse
 import sys
-import paho.mqtt.publish as publish
+import paho.mqtt.client as mqtt
+
+MQTTbroker = "homeassistant.hm"
+User = "mqttuser"
+Password = "mqttpass"
+PORT = 1883
+myhost = os.uname()[1]
+client_id = "hotwater-v2_temps" + "-" +  myhost
+STATUSTOPIC =  "hotwater-v2/temps"
+
+DEBUG = ""
 
 # this is the list of sensors and associated properties that make up the hot water heater
 SENSORS  = []
@@ -22,11 +32,25 @@ CALFILE = "Calibration.json"
 
 # This is the distance from the top of the tank to the probe location ( in 10ths of an inch)
 # this may be good to read from a config file ....
-PROBE_DIST_LIST=[0, 170, 410, 530, 600,700]
+PROBE_DIST_LIST=[0, 170, 410, 530]
 
-# By default we will be running running on the Rpi but for testing purposed this flag ( passed in from the commandline)
-# allows us to code around the kernel set up that is done on the pi.
+# tank volume 50 Gal
+TANKSIZE = 50.0
+
+# BTU energy to raise 1 lb of water 1 degree Fahrenheit
+# 1 gallon of water weighs 8.34 lbs
+# tank weight = 50 * 8.34
+# tank is 53 in tall so tankweight/53 = weight per inch
+LBS_PER_INCH = ( TANKSIZE * 8.34 )/ ( float(PROBE_DIST_LIST[-1] ) )
+
+# temperature of the water flowing into the tank ( in degrees F )
+ROOM_TEMP=74.0
+
+# By default, we will be running running on the Rpi but for testing purposed this flag
+# ( passed in from the commandline) allows us to code around the kernel set up that is done on the pi.
 SIMULATE=False
+BASE_DIR = '/home/pi/Hotwater-tank-monitor/sensors/'
+BASE_DIR_SIM = '/home/pi/Hotwater-tank-monitor/sensors.sim/'
 
 # list of device files, basically the number of temperature probes
 DEV_FILES=[]
@@ -118,114 +142,192 @@ def do_calibration(cal_loop=10 ):
                 # the temp of the probe is the temp from the sensor + the calibration
                 SENSORS[i]["temp_c"] = deg_c + SENSORS[i]["calibration"]
                 SENSORS[i]["temp_f"] = SENSORS[i]["temp_c"] * 9.0 / 5.0 + 32.0
-                print '{0:10s} Raw:{1:5.1f} Cal_factor:{2:5.2f} Cooked_temp{3:6.1f} sample:{4:5.2f}'.format\
-                    (label, deg_c, SENSORS[i]["calibration"],SENSORS[i]["temp_c"], SENSORS[i]["num_readings"] )
+                #print ( {0:10s} Raw:{1:5.1f} Cal_factor:{2:5.2f} Cooked_temp{3:6.1f} sample:{4:5.2f}'.format
+                #    (label, deg_c, SENSORS[i]["calibration"],SENSORS[i]["temp_c"], SENSORS[i]["num_readings"] )
 
             time.sleep(3)
 
         # dump the calibration string to a file
-        for i in range( 0, 4 ):
-            CAL.append( SENSORS[i]["calibration"] )
+        for j in range( 0, 4 ):
+            CAL.append( SENSORS[j]["calibration"] )
 
-        print "saving new calibrations: to ",CALFILE, CAL
+        print ("saving new calibrations: to ",CALFILE, CAL)
         f = open(CALFILE, 'w')
         json.dump(CAL,f,sort_keys=True,indent=4,separators=(',', ': ') )
         f.close()
 
 
 
+def gettemps( base_dir = BASE_DIR ):
+
+    global DEV_FILES, DEBUG
+    # get the list of temp probes  attached to the bus
+
+    dev_name = '/w1_slave'
+    # for example ... /home/pi/hw_heater/sensors/1.upper/w1_slave' They are links to the real device files but by creating
+    # links we can assign them a name and an ordinal value. prob0 is at the top probe prob3 is at the bottom
+
+    DEV_FILES = sorted( glob.glob( base_dir + '*' + dev_name) )
+
+    pat = re.compile( base_dir +'(.*)/w1_slave')
+    for i in range( 0,  len(DEV_FILES) ):
+        # just in case we are running in simulation mode an we have DOS file names!!
+        dev = DEV_FILES[i].replace('\\','/')
+        match = pat.search(dev)
+        l = match.group(1)
+        # initialize the device file, label, and initial calibration value
+        #  the one point calibration does not seem to be working, the same probe at the same temerature seems to be be a different value each time
+        # the probes donr seem to be a constant
+        # difference in temperature apart
+        SENSORS.append( { "device":dev, "label":l, "calibration":0.0, "num_readings":0,
+                          "sum_readings":0,"temp_c":0.0,"temp_f":0.0, "dist":PROBE_DIST_LIST[i] })
+
+    # run the calibration loop
+    do_calibration( CALIBRATE )
+
+    #Get the temp and apply the calibration to it
+    for i in range( 0,  len(DEV_FILES) ):
+        label =  SENSORS[i]["label"]
+        deg_c, deg_f = read_temp(  SENSORS[i]["device"] )
+        SENSORS[i]["temp_c"] = deg_c + SENSORS[i]["calibration"]
+        SENSORS[i]["temp_f"] = SENSORS[i]["temp_c"] * 9.0 / 5.0 + 32.0
+        if DEBUG:
+            print ( '{0:20s} Raw_temp{1:5.1f} Cooked_temp_c{2:5.1f} Cooked_temp_f{3:5.1f} Calibration{4:5.1f}'\
+            .format(label, deg_c, SENSORS[i]["temp_c"], SENSORS[i]["temp_f"], SENSORS[i]["calibration"]) )
+
+    return SENSORS
+
+def heatcontent (t_list, d_list ):
+#     """
+#     calculates the heat content for each temperature band in the tank
+#     :param t_list: temperature at the probes
+#     :param d_list: distance from top of tank to each of the probes
+#     :return: BTU in the entire tank
+#     """
+
+    # figure out how many BTU is in each slice
+    BTU = 0.0
+    for probe_num in range( 0, len(d_list)-1):
+        d1 = d_list[probe_num]
+        d2 = d_list[probe_num+1]
+        # inches in this sliace
+        slice_height = d2 - d1;
+
+        t1 = t_list[probe_num]
+        t2 = t_list[probe_num+1]
+        # temp of the input water ( subtract off  the room temp component )
+        avg_temp_increase = ((t1 + t2 )/2.0 ) - ROOM_TEMP
+
+        # we already figured ou how many lbs of water are in are in a inch of tank
+        # so the number of BTU = weight of water * Temp delta
+        BTU += float( slice_height * LBS_PER_INCH ) * avg_temp_increase
+        # print BTU
+    # 1 KWH = 3412.14 BTU
+    # or
+    # 1KWH = 3600 Kjoules/hour
+    KWH = BTU/3412.14
+    # 1 KJ = 0.947817 BTU
+    KJ = BTU/0.947817
+
+    return BTU,KWH,KJ
+
+if __name__ == '__main__':
 # Main function
 # Description:
 #   Uses the list of devices it queries them one by one, calculates the average and the delta each sensor is from the average
-#   This delta values will be used to calabrate each sensor
+#   This delta values will be used to calibrate each sensor
 
+    parser = argparse.ArgumentParser(description='Hotwater temp probe')
 
-parser = argparse.ArgumentParser(description='Hotwater temp probe')
+    parser.add_argument('--verbose','-v',
+        action='store_true',
+        help='verbose flag' )
 
-parser.add_argument('--verbose','-v',
-    action='store_true',
-    help='verbose flag' )
+    parser.add_argument('--calibrate',"-c",
+        type=int,
+        default=0,
+        help='Calculate calibration offsets. A value of 0 will load the defaults' )
 
-parser.add_argument('--calibrate',"-c",
-    type=int,
-    default=0,
-    help='Calculate calibration offsets. A value of 0 will load the defaults' )
+    parser.add_argument('--simulate','-s',
+        action='store_true',
+        help='simulate the device files instead of using the ones on the PI' )
 
-parser.add_argument('--simulate','-s',
-    action='store_true',
-    help='simulate the device files instead of using the ones on the PI' )
+    parser.add_argument('--test_calibration','-t',
+        type=int,
+        default=0,
+        help='Number or temp collections to run and apply the calibration amount ' )
 
-parser.add_argument('--test_calibration','-t',
-    type=int,
-    default=0,
-    help='Number or temp collections to run and apply the calibration amount ' )
+    parser.add_argument('--debug', '-d',
+        action='store_true',
+        help='Enable Debug output.')
 
-parser.add_argument('--mqtt','-m',
-    action='store_true',
-    help='Publish to MQTT server' )
+    parser.add_argument('--mqtt','-m',
+        action='store_true',
+        help='Publish to MQTT server' )
 
+    parser.add_argument('--broker', '-o',
+        type=str,
+        help='IP or name of MQTT broker')
 
-args = parser.parse_args()
+    parser.add_argument('--user', '-u',
+        type=str,
+        help='Username for QQTT broker')
 
-if args.calibrate:
-    CALIBRATE = args.calibrate
-else:
-    CALIBRATE = 0
+    parser.add_argument('--password', '-p',
+                        type=str,
+                        help='Password for MQTT broker')
 
+    args = parser.parse_args()
 
-if ( args.simulate or  sys.platform == "win32" ):
-    SIMULATE = True
-else:
-    # Running on PI
-    os.system('modprobe w1-gpio')
-    os.system('modprobe w1-therm')
-    SIMULATE = False
+    if args.calibrate:
+        CALIBRATE = args.calibrate
+    else:
+        CALIBRATE = 0
 
-# get the list of temp probes  attached to the bus
-base_dir = '/home/pi/hw_heater/sensors/'
-dev_name = '/w1_slave'
-# for example ... /home/pi/hw_heater/sensors/1.upper/w1_slave' They are links to the real device files but by creating
-# links we can assign them a name and an ordinal value. prob0 is at the top probe prob3 is at the bottom
+    if args.simulate or  sys.platform == "win32":
+        base_dir = BASE_DIR_SIM
+        SIMULATE = True
+    else:
+        # Running on PI
+        os.system('modprobe w1-gpio')
+        os.system('modprobe w1-therm')
+        base_dir = BASE_DIR
+        SIMULATE = False
 
-DEV_FILES = sorted( glob.glob( base_dir + '*' + dev_name) )
+    if args.debug:
+        print("Debug on")
+        DEBUG = args.debug
 
-pat = re.compile( '/home/pi/hw_heater/sensors/(.*)/w1_slave')
-for i in range( 0,  len(DEV_FILES) ):
-    # just in case we are running in simulation mode an we have DOS file names!!
-    dev = DEV_FILES[i].replace('\\','/')
-    match = pat.search(dev)
-    l = match.group(1)
-    # initialize the device file, label, and initial calibration value
-    #  the one point calibration does not seem to be working, the same probe at the same temerature seems to be be a different value each time
-    # the probes donr seem to be a constant
-    # difference in temperature apart
-    SENSORS.append( { "device":dev, "label":l, "calibration":0.0, "num_readings":0,
-                      "sum_readings":0,"temp_c":0.0,"temp_f":0.0, "dist":PROBE_DIST_LIST[i] })
+    SENSORS = gettemps( base_dir )
 
-# run the calibration loop
-do_calibration( CALIBRATE )
+    # calculate energy content
+    # Pull it back out of the dictionary in case it got adjusted somewhere
+    PROBE_TEMP_LIST = [i["temp_f"] for i in SENSORS]
+    PROBE_DIST_LIST = [i["dist"] for i in SENSORS]
 
-#Get the temp and apply the calibration to it
-for i in range( 0,  len(DEV_FILES) ):
-    label =  SENSORS[i]["label"]
-    deg_c, deg_f = read_temp(  SENSORS[i]["device"] )
-    SENSORS[i]["temp_c"] = deg_c + SENSORS[i]["calibration"]
-    SENSORS[i]["temp_f"] = SENSORS[i]["temp_c"] * 9.0 / 5.0 + 32.0
-    #print '{0:20s} Raw_temp{1:5.1f} Cooked_temp_c{2:5.1f} Cooked_temp_f{3:5.1f} Calibration{4:5.1f}'\
-    #    .format(label, deg_c, SENSORS[i]["temp_c"], SENSORS[i]["temp_f"], SENSORS[i]["calibration"])
+    btu, kwh, kj = heatcontent (PROBE_TEMP_LIST, PROBE_DIST_LIST )
+    # given:  1 watt is 1 J/sec
+    # so if the tank heats up by 1000J in 1 sec that takes 1000j/(1/3600 hour)  or 1KWS
+    # 1KWH / 3600*KWS  or  1KWS = .278KWh
 
-# short or long form
-if args.verbose:
-    SENSORS_str = json.dumps(SENSORS,sort_keys=True,indent=4,separators=(',', ': '))
-else:
-    #print [SENSORS[i]["temp_f"] for i in range( 0, len(DEV_FILES) ) ]
-    SENSORS_str = json.dumps([SENSORS[i]["temp_f"] for i in range( 0, len(DEV_FILES) ) ],sort_keys=True,indent=4,separators=(',', ': '))
+    SENSORS.append ( {"KWH" : "{0:.1f}".format(kwh),"KJ" :"{0:.0f}".format(kj), "BTU" : "{0:.0f}".format(btu) } )
 
-print SENSORS_str
+    # short or long form
+    if args.verbose:
+        SENSORS_str = json.dumps(SENSORS,sort_keys=True,indent=4,separators=(',', ': '))
+    else:
+        #print [SENSORS[i]["temp_f"] for i in range( 0, len(DEV_FILES) ) ]
+        SENSORS_str = json.dumps([SENSORS[i]["temp_f"] for i in range( 0, len(DEV_FILES) ) ],sort_keys=True,indent=4,separators=(',', ': '))
 
-if args.mqtt:
-   publish.single( "hotwater", SENSORS_str, qos=1, retain=True, client_id="hwsender", hostname="192.168.2.48" )
- 
+    if DEBUG: print (  SENSORS_str )
+
+    if args.mqtt:
+        client = mqtt.Client(client_id)
+        client.username_pw_set(username=User, password=Password)
+        client.connect(MQTTbroker, port=PORT)
+        # insert discovery publish here
+        client.publish( STATUSTOPIC, SENSORS_str, qos=1, retain=True )
+        client.disconnect()
 
 
 
