@@ -28,6 +28,6 @@
 30 19 * * * /home/pi/hw_heater/repo/sh/turnoff.sh
 #
 # turn off just incase it get left on from the UI
-00 00 * * * pi python3 /home/pi/hw_heater/repo/py/hw_ctrl2.py --off
+00 00 * * * /home/pi/hw_heater/repo/sh/turnoff.sh
 
 
