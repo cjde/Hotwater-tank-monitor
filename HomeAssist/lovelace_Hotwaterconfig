@@ -1,8 +1,36 @@
-type: button
-tap_action:
-  action: toggle
-entity: light.hotwater
-show_state: true
-icon: mdi:desktop-tower
-
-
+type: vertical-stack
+cards:
+  - type: button
+    tap_action:
+      action: toggle
+    entity: light.hotwater
+    show_state: true
+    icon: mdi:desktop-tower
+    icon_height: 40px
+  - type: gauge
+    min: 500
+    entity: sensor.heatcontent
+    needle: true
+    max: 25000
+    severity:
+      blue: 2000
+      green: 6000
+      yellow: 12000
+      orange: 16000
+      red: 18000
+  - type: history-graph
+    entities:
+      - entity: sensor.hw_upper_temp
+      - entity: sensor.hw_middle_temp
+      - entity: sensor.hw_lower_temp
+      - entity: sensor.hw_bottom_temp
+    hours_to_show: 24
+    refresh_interval: 0
+    title: null
+  - type: entities
+    entities:
+      - entity: sensor.hw_upper_temp
+      - entity: sensor.hw_middle_temp
+      - entity: sensor.hw_lower_temp
+      - entity: sensor.hw_bottom_temp
+    title: Tank Temperature
