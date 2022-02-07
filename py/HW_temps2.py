@@ -88,8 +88,8 @@ def read_temp( dfile ):
             temp_string = lines[1][equals_pos+2:]
             C = float(temp_string) / 1000.0 + C
 
-    temp_c = round ( C/2.0,4 )
-    temp_f = temp_c * 9.0 / 5.0 + 32.0
+    temp_c = round ( C/2.0,1 )
+    temp_f = round ( temp_c * 9.0 / 5.0 + 32.0,1 )
     return temp_c, temp_f
 
 def do_calibration(cal_loop=10 ):
