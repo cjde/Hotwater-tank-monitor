@@ -46,11 +46,10 @@ LBS_PER_INCH = ( TANKSIZE * 8.34 )/ ( float(PROBE_DIST_LIST[-1] ) )
 # temperature of the water flowing into the tank ( in degrees F )
 ROOM_TEMP=74.0
 
-# By default, we will be running running on the Rpi but for testing purposed this flag
-# ( passed in from the commandline) allows us to code around the kernel set up that is done on the pi.
-SIMULATE=False
-BASE_DIR = '/home/pi/Hotwater-tank-monitor/sensors/'
-BASE_DIR_SIM = '/home/pi/Hotwater-tank-monitor/sensors.sim/'
+# location of the directory that contains links to the devices or
+# directories of files that represent the simulated driver files
+HOMEDIR = "~/hw-venv/Hotwater-tank-monitor"
+
 
 # list of device files, basically the number of temperature probes
 DEV_FILES=[]
@@ -158,7 +157,7 @@ def do_calibration(cal_loop=10 ):
 
 
 
-def gettemps( base_dir = BASE_DIR ):
+def gettemps( base_dir = HOMEDIR + "/sensors/" ):
 
     global DEV_FILES, DEBUG
     # get the list of temp probes  attached to the bus
@@ -274,8 +273,12 @@ if __name__ == '__main__':
         help='Username for QQTT broker')
 
     parser.add_argument('--password', '-p',
-                        type=str,
-                        help='Password for MQTT broker')
+        type=str,
+        help='Password for MQTT broker')
+
+    parser.add_argument('--home', '-H',
+        type=str,
+        help='Base directory for the sensors')
 
     args = parser.parse_args()
 
@@ -284,19 +287,30 @@ if __name__ == '__main__':
     else:
         CALIBRATE = 0
 
-    if args.simulate or  sys.platform == "win32":
-        base_dir = BASE_DIR_SIM
-        SIMULATE = True
+    if args.home:
+        HOMEDIR = args.home
+
+    # By default, running on the Rpi but for testing purposed this flag
+    # allows us to code around the kernel set up that is done on the pi.
+    # and use the fake w1_slave files instead of hhe real ones
+
+    if args.simulate or sys.platform == "win32":
+        base_dir = HOMEDIR + "/sensors.sim/"
     else:
         # Running on PI
-        os.system('modprobe w1-gpio')
-        os.system('modprobe w1-therm')
-        base_dir = BASE_DIR
-        SIMULATE = False
+        base_dir = HOMEDIR + "/sensors/"
+        try:
+            os.system('modprobe w1-gpio')
+            os.system('modprobe w1-therm')
+        except:
+            print("Modprobe error.")
+
 
     if args.debug:
-        print("Debug on")
+        print("Debug on!")
+        print("Using sensors in base_dir: ", base_dir  )
         DEBUG = args.debug
+
 
     SENSORS = gettemps( base_dir )
 
