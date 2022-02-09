@@ -48,7 +48,7 @@ ROOM_TEMP=74.0
 
 # location of the directory that contains links to the devices or
 # directories of files that represent the simulated driver files
-HOMEDIR = "~/hw-venv/Hotwater-tank-monitor"
+HOMEDIR = "/home/pi/hw-venv/Hotwater-tank-monitor"
 
 
 # list of device files, basically the number of temperature probes
@@ -159,7 +159,7 @@ def do_calibration(cal_loop=10 ):
 
 
 
-def gettemps( base_dir = HOMEDIR + "/sensors/" ):
+def gettemps( base_dir  ):
 
     global DEV_FILES, DEBUG
     # get the list of temp probes  attached to the bus
@@ -190,8 +190,8 @@ def gettemps( base_dir = HOMEDIR + "/sensors/" ):
     for i in range( 0,  len(DEV_FILES) ):
         label =  SENSORS[i]["label"]
         deg_c, deg_f = read_temp(  SENSORS[i]["device"] )
-        SENSORS[i]["temp_c"] = deg_c + SENSORS[i]["calibration"]
-        SENSORS[i]["temp_f"] = SENSORS[i]["temp_c"] * 9.0 / 5.0 + 32.0
+        SENSORS[i]["temp_c"] = deg_c + round ( SENSORS[i]["calibration"], 1 )
+        SENSORS[i]["temp_f"] = deg_f + round ( SENSORS[i]["calibration"] * 9.0 / 5.0 + 32.0, 1 )
         if DEBUG:
             print ( '{0:20s} Raw_temp{1:5.1f} Cooked_temp_c{2:5.1f} Cooked_temp_f{3:5.1f} Calibration{4:5.1f}'\
             .format(label, deg_c, SENSORS[i]["temp_c"], SENSORS[i]["temp_f"], SENSORS[i]["calibration"]) )
