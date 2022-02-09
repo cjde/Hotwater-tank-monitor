@@ -55,9 +55,8 @@ def on_message(client, userdata, msg):
         decoded = msg.payload.decode('UTF-8')
 
         if decoded == STATUS_MSG:
+            # looking for status, dont set anything just send back the current state
             if DEBUG: print("STATUS")
-            if DEBUG: print("Publishing ", DEVICESTATE, " to topic", STATUSTOPIC)
-            client.publish(STATUSTOPIC, DEVICESTATE)
         elif decoded == ON_MSG :
             if DEBUG: print("ON")
             try:
@@ -86,7 +85,13 @@ def on_message(client, userdata, msg):
 
             if DEBUG:
                 print ("JSON payloads:",len(dic), dic )
-            return True
+
+        if DEBUG:
+           print("Publishing ", DEVICESTATE, " to topic", STATUSTOPIC)
+
+        # let the rest of the world know what the current state is
+        client.publish(STATUSTOPIC, DEVICESTATE, retain=True)
+        return True
     except:
         print ("Bad data in binary message: ",str(PAYLOAD))
         return False
