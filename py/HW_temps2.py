@@ -191,7 +191,7 @@ def gettemps( base_dir  ):
         label =  SENSORS[i]["label"]
         deg_c, deg_f = read_temp(  SENSORS[i]["device"] )
         SENSORS[i]["temp_c"] = deg_c + round ( SENSORS[i]["calibration"], 1 )
-        SENSORS[i]["temp_f"] = deg_f + round ( SENSORS[i]["calibration"] * 9.0 / 5.0 + 32.0, 1 )
+        SENSORS[i]["temp_f"] = round (deg_f + SENSORS[i]["calibration"] * 9.0 / 5.0, 1 )
         if DEBUG:
             print ( '{0:20s} Raw_temp{1:5.1f} Cooked_temp_c{2:5.1f} Cooked_temp_f{3:5.1f} Calibration{4:5.1f}'\
             .format(label, deg_c, SENSORS[i]["temp_c"], SENSORS[i]["temp_f"], SENSORS[i]["calibration"]) )
