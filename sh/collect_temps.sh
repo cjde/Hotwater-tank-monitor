@@ -4,6 +4,7 @@
 #
 script="HW_temps2.py"
 venvpath="/home/pi/hw-venv"
+cd  ${venvpath}/Hotwater-tank-monitor 
 if [ `ps -ef | grep $script| grep -v grep| wc -l| grep 0` ] ; then 
    logger "Collecting hotwater temperature ( ${script} )";
    source ${venvpath}/bin/activate
