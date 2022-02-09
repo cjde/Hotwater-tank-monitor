@@ -20,10 +20,18 @@
 # For more information see the manual pages of crontab(5) and cron(8)
 # 
 #m  h  dom mon dow   command
-*   * * * * python /home/pi/hw_heater/blink2.py
 
-# *   * * * * pi python3 /home/pi/hw_heater/HW_temps.py --mqtt --v
-# *   * * * * pi  /home/pi/hw-venv/Hotwater-tank-monitor/sh/check_driver.sh
+# heartbeat LED on the PI 
+*   * * * * python /home/pi/hw-venv/Hotwater-tank-monitor/py/blink2.py
+
+
+# Publish the temps every minute
+*   * * * *  /home/pi/hw-venv/Hotwater-tank-monitor/sh/collect_temps.sh
+
+# watch dog for the python script that publishes temps to home assistant 
+*   * * * *  /home/pi/hw-venv/Hotwater-tank-monitor/sh/check_driver.sh
+#
+# turn on the hotwater heater at 4:30 pm and off at 7:30 after showers 
 30 16 * * *  /home/pi/hw-venv/Hotwater-tank-monitor/sh/turnon.sh
 30 19 * * *  /home/pi/hw-venv/Hotwater-tank-monitor/sh/turnoff.sh
 #
