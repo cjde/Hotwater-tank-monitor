@@ -23,11 +23,11 @@
 *   * * * * python /home/pi/hw_heater/blink2.py
 
 # *   * * * * pi python3 /home/pi/hw_heater/HW_temps.py --mqtt --v
-# *   * * * * pi /home/pi/hw_heater/repo/check_driver.sh
-30 16 * * * /home/pi/hw_heater/repo/sh/turnon.sh 
-30 19 * * * /home/pi/hw_heater/repo/sh/turnoff.sh
+# *   * * * * pi  /home/pi/hw-venv/Hotwater-tank-monitor/sh/check_driver.sh
+30 16 * * *  /home/pi/hw-venv/Hotwater-tank-monitor/sh/turnon.sh
+30 19 * * *  /home/pi/hw-venv/Hotwater-tank-monitor/sh/turnoff.sh
 #
 # turn off just incase it get left on from the UI
-00 00 * * * /home/pi/hw_heater/repo/sh/turnoff.sh
+00 00 * * *  /home/pi/hw-venv/Hotwater-tank-monitor/sh/turnoff.sh
 
 
