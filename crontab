@@ -28,7 +28,7 @@
 # Publish the temps every minute
 *   * * * *  /home/pi/hw-venv/Hotwater-tank-monitor/sh/collect_temps.sh
 
-# watch dog for the python script that publishes temps to home assistant 
+# watch dog for the python script that listens to ON and OFF messages from  home assistant
 *   * * * *  /home/pi/hw-venv/Hotwater-tank-monitor/sh/check_driver.sh
 #
 # turn on the hotwater heater at 4:30 pm and off at 7:30 after showers 
