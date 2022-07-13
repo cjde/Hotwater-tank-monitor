@@ -75,8 +75,8 @@ python /home/pi/hw-venv/Hotwater-tank-monitor/py/blink2.py
 - Verify that you can read the calibration file, the simulated I2C sensors and publish to Home assistant. Then run it again this time not simulating the devices but instead use the real device files that are linked to from the sensors directory. This directory will need to have links that point to the devices for your PI
 
 ```
-python3 /home/pi/hw-venv/Hotwater-tank-monitor/py/HW_temps2.py -m -v -d -s
-python3 /home/pi/hw-venv/Hotwater-tank-monitor/py/HW_temps2.py -m -v -d 
+python3 /home/pi/hw-venv/Hotwater-tank-monitor/py/hw_temps2.py -m -v -d -s
+python3 /home/pi/hw-venv/Hotwater-tank-monitor/py/hw_temps2.py -m -v -d 
 ```
 
 - Verify that the service that turns on and off the relay is operational. Start up the power listner then send a MQTT message to it. Kill the hw_device2.py script when succesfull
