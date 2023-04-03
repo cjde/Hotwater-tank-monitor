@@ -10,85 +10,23 @@ tts:
 group: !include groups.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
-scene: !include scenes.yaml
+scene: !include scenes.yaml 
+mqtt: !include mqtt.yaml
 
-frontend:
-  themes: !include_dir_merge_named themes
+#frontend:
+#  themes: !include_dir_merge_named themes
 
 
+# PI hardware resources    
+sensor: 
+  - platform: systemmonitor
+    resources:
+      - type: disk_use_percent
+        arg: /config
+      - type: memory_use_percent
+      - type: load_1m
+      - type: load_5m  
+   
+#   qos: 0
+   
 
-light:
- - platform: mqtt
-   name: Hotwater
-   command_topic: hotwater-v2/power
-   state_topic: hotwater-v2/status
-   qos: 0
-
- - platform: mqtt
-   name: Backlight
-   command_topic: "hotwater-v2/nokia_lcd/cmd"
-   state_topic: "hotwater-v2/nokia_lcd/status"
-   value_template: "{{ value_json[0].backlight }}"
-   payload_off: "OFF"
-   payload_on: "ON"
-   qos: 0
-
-sensor:
- - platform: mqtt
-   unique_id: "backlight_sensor_id"
-   name: BacklightSensor
-   state_topic:  'hotwater-v2/nokia_lcd/status'
-   value_template: '{{ value_json[0].backlight }}'
-
- - platform: mqtt
-   name: "hw_upper_temp"
-   device_class: temperature
-   unit_of_measurement: '°F'
-   state_topic: "hotwater-v2/temps"
-   value_template: "{{ value_json[0].temp_f }}"
-
- - platform: mqtt
-   name: "hw_middle_temp"
-   device_class: temperature
-   unit_of_measurement: '°F'
-   state_topic: "hotwater-v2/temps"
-   value_template: "{{ value_json[1].temp_f }}"
-
- - platform: mqtt
-   name: "hw_lower_temp"
-   device_class: temperature
-   unit_of_measurement: '°F'
-   state_topic: "hotwater-v2/temps"
-   value_template: "{{ value_json[2].temp_f }}"
-
- - platform: mqtt
-   name: "hw_bottom_temp"
-   device_class: temperature
-   unit_of_measurement: '°F'
-   state_topic: "hotwater-v2/temps"
-   value_template: "{{ value_json[3].temp_f }}"
-
- - platform: mqtt
-   name: "heatcontent"
-   device_class: temperature
-   unit_of_measurement: 'BTU'
-   state_topic: "hotwater-v2/temps"
-   value_template: "{{ value_json[4].BTU }}"
-
-#  This is a switch because lights dont have a different
-# state status than the command to turn it on
-switch:
- - platform: mqtt
-   name: MessageOnLCD
-   command_topic: hotwater-v2/nokia_lcd/cmd
-   payload_off: "[{\"linenum\": 0, \"msg\": \"The OFF msg    \",\"backlight\":\"OFF\"}]"
-   payload_on: "[{\"linenum\": 0, \"msg\": \"    The ON msg\",\"backlight\":\"ON\"}]"
-
-   # see https://www.home-assistant.io/integrations/switch.mqtt/ for the interaction
-   # between state_topic, state_on and state_off and the value template
-   state_topic:  "hotwater-v2/nokia_lcd/status"
-   state_on: "ON"
-   state_off: "OFF"
-   value_template: "{{ value_json[0].backlight }}"
-
-   qos: 0
