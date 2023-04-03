@@ -1,0 +1,41 @@
+light:
+  - name: Hotwater
+    command_topic: hotwater-v2/power
+    state_topic: hotwater-v2/status
+  
+sensor:
+  - name: "hw_upper_temp"
+    device_class: temperature
+    unit_of_measurement: '°F'
+    state_topic: "hotwater-v2/temps"
+    value_template: "{{ value_json[0].temp_f }}"
+
+  - name: "hw_middle_temp"
+    device_class: temperature
+    unit_of_measurement: '°F'
+    state_topic: "hotwater-v2/temps"
+    value_template: "{{ value_json[1].temp_f }}"
+
+  - name: "hw_lower_temp"
+    device_class: temperature
+    unit_of_measurement: '°F'
+    state_topic: "hotwater-v2/temps"
+    value_template: "{{ value_json[2].temp_f }}"
+
+  - name: "hw_bottom_temp"
+    device_class: temperature
+    unit_of_measurement: '°F'
+    state_topic: "hotwater-v2/temps"
+    value_template: "{{ value_json[3].temp_f }}"
+   
+  - name: "heatcontent"
+    device_class: temperature
+    unit_of_measurement: 'KWH'
+    state_topic: "hotwater-v2/temps"
+    value_template: "{{ value_json[4].KWH }}"
+    
+  - name: "heatcontentBTU"
+    device_class: temperature
+    unit_of_measurement: 'BTU'
+    state_topic: "hotwater-v2/temps"
+    value_template: "{{ value_json[4].BTU }}"
